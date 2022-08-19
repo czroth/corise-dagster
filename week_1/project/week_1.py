@@ -63,9 +63,14 @@ def process_data(stocks: list[Stock]) -> Aggregation:
     )
 
 
-@op
-def put_redis_data():
-    pass
+@op(
+    ins={"agg_max": In(dagster_type=Aggregation)},
+    out=None,
+    tags={"kind": "redis"},
+    description="Post aggregate result to Redis",
+)
+def put_redis_data(agg_max: Aggregation) -> None:
+    print(agg_max)
 
 
 @job
