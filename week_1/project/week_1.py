@@ -40,7 +40,7 @@ class Aggregation(BaseModel):
     tags={"kind": "s3"},
     description="Get a list of stocks from an S3 file",
 )
-def get_s3_data(context):
+def get_s3_data(context) -> List[Stock]:
     output = list()
     with open(context.op_config["s3_key"]) as csvfile:
         reader = csv.reader(csvfile)
@@ -58,7 +58,7 @@ def get_s3_data(context):
 )
 def process_data(stocks: list[Stock]) -> Aggregation:
     return Aggregation(
-        date=(highest_stock := max(stocks, key=lambda x: x.high)).date,
+        date=(highest_stock := max(stocks, key=lambda stock: stock.high)).date,
         high=highest_stock.high,
     )
 
