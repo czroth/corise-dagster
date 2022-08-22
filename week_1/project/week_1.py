@@ -40,7 +40,7 @@ class Aggregation(BaseModel):
     tags={"kind": "s3"},
     description="Get a list of stocks from an S3 file",
 )
-def get_s3_data(context):
+def get_s3_data(context) -> List[Stock]:
     output = list()
     with open(context.op_config["s3_key"]) as csvfile:
         reader = csv.reader(csvfile)
@@ -50,16 +50,29 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"agg_max": Out(dagster_type=Aggregation)},
+    tags={"kind": "bi"},
+    description="Find the highest stock price and date",
+)
+def process_data(stocks: list[Stock]) -> Aggregation:
+    return Aggregation(
+        date=(highest_stock := max(stocks, key=lambda stock: stock.high)).date,
+        high=highest_stock.high,
+    )
 
 
-@op
-def put_redis_data():
-    pass
+@op(
+    ins={"agg_max": In(dagster_type=Aggregation)},
+    out=None,
+    tags={"kind": "redis"},
+    description="Post aggregate result to Redis",
+)
+def put_redis_data(context, agg_max: Aggregation) -> None:
+    context.log.info(f"Putting {agg_max} to Redis")
 
 
 @job
 def week_1_pipeline():
-    pass
+    put_redis_data(process_data(get_s3_data()))

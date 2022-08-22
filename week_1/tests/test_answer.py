@@ -77,7 +77,8 @@ def test_process_data(stocks):
 
 
 def test_put_redis_data(aggregation):
-    put_redis_data(aggregation)
+    with build_op_context() as context:
+        put_redis_data(context, aggregation)
 
 
 def test_job(file_path):
