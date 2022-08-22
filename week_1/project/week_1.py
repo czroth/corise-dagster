@@ -69,8 +69,8 @@ def process_data(stocks: list[Stock]) -> Aggregation:
     tags={"kind": "redis"},
     description="Post aggregate result to Redis",
 )
-def put_redis_data(agg_max: Aggregation) -> None:
-    print(agg_max)
+def put_redis_data(context, agg_max: Aggregation) -> None:
+    context.log.info(f"Putting {agg_max} to Redis")
 
 
 @job
