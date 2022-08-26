@@ -120,6 +120,6 @@ def s3_resource(context) -> S3:
 def redis_resource(context) -> Redis:
     """This resource defines a Redis client"""
     return Redis(
-        host=context.resource_config["bucket"],
+        host=context.resource_config["host"],
         port=context.resource_config["port"],
     )
