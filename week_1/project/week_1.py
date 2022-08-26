@@ -56,7 +56,7 @@ def get_s3_data(context) -> List[Stock]:
     tags={"kind": "bi"},
     description="Find the highest stock price and date",
 )
-def process_data(stocks: list[Stock]) -> Aggregation:
+def process_data(stocks: List[Stock]) -> Aggregation:
     return Aggregation(
         date=(highest_stock := max(stocks, key=lambda stock: stock.high)).date,
         high=highest_stock.high,
