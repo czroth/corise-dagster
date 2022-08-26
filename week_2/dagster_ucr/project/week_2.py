@@ -10,10 +10,17 @@ def get_s3_data():
     pass
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"agg_max": Out(dagster_type=Aggregation)},
+    tags={"kind": "bi"},
+    description="Find the highest stock price and date",
+)
+def process_data(stocks: list[Stock]) -> Aggregation:
+    return Aggregation(
+        date=(highest_stock := max(stocks, key=lambda stock: stock.high)).date,
+        high=highest_stock.high,
+    )
 
 
 @op
@@ -23,8 +30,7 @@ def put_redis_data():
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
-    pass
+    put_redis_data(process_data(get_s3_data()))
 
 
 local = {
