@@ -26,7 +26,7 @@ def insert_into_table(context, table_name: String):
     number_of_rows = randint(1, 10)
     for _ in range(number_of_rows):
         context.resources.database.execute_query(sql)
-        context.log.info("Inserted a row")
+        context.log.debug("Inserted a row")
 
     context.log.info("Batch inserted")
 
