@@ -151,18 +151,19 @@ def docker_week_3_sensor(context):
         endpoint_url="http://host.docker.internal:4566",
         since_key=context.last_run_key,
     )
-    for new_s3_key in new_s3_keys:
-        yield RunRequest(
-            run_key=new_s3_key,
-            run_config=docker | {
-                "ops": {
-                    "get_s3_data": {
-                        "config": {
-                            "s3_key": new_s3_key
+    if not new_s3_keys:
+        yield SkipReason("No new s3 files found in bucket.")
+    else:
+        for new_s3_key in new_s3_keys:
+            yield RunRequest(
+                run_key=new_s3_key,
+                run_config=docker | {
+                    "ops": {
+                        "get_s3_data": {
+                            "config": {
+                                "s3_key": new_s3_key
+                            }
                         }
                     }
                 }
-            }
-        )
-    else:
-        yield SkipReason("No new s3 files found in bucket.")
+            )
