@@ -19,28 +19,53 @@ from project.sensors import get_s3_keys
 from project.types import Aggregation, Stock
 
 
-@op
-def get_s3_data():
-    # Use your ops from week 2
-    pass
+@op(
+    config_schema={"s3_key": str},
+    required_resource_keys={"s3"},
+    out={"stocks": Out(dagster_type=List[Stock])},
+    tags={"kind": "s3"},
+    description="Get a list of stocks from an S3 file",
+)
+def get_s3_data(context) -> [Stock]:
+    output = list()
+    for row in context.resources.s3.get_data(context.op_config["s3_key"]):
+        print(row)
+        stock = Stock.from_list(row)
+        output.append(stock)
+    return output
 
 
-@op
-def process_data():
-    # Use your ops from week 2
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"agg_max": Out(dagster_type=Aggregation)},
+    tags={"kind": "bi"},
+    description="Find the highest stock price and date",
+)
+def process_data(stocks: List[Stock]) -> Aggregation:
+    return Aggregation(
+        date=(highest_stock := max(stocks, key=lambda stock: stock.high)).date,
+        high=highest_stock.high,
+    )
 
 
-@op
-def put_redis_data():
-    # Use your ops from week 2
-    pass
+@op(
+    required_resource_keys={"redis"},
+    ins={"agg_max": In(dagster_type=Aggregation)},
+    out=None,
+    tags={"kind": "redis"},
+    description="Post aggregate result to Redis",
+)
+def put_redis_data(context, agg_max: Aggregation) -> None:
+    context.log.debug(f"Putting {agg_max} to Redis")
+    context.resources.redis.put_data(
+        name=f"{agg_max.date}",
+        value=agg_max.high,
+    )
 
 
 @graph
 def week_3_pipeline():
-    # Use your graph from week 2
-    pass
+    put_redis_data(process_data(get_s3_data()))
 
 
 local = {
