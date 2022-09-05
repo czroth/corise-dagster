@@ -2,7 +2,6 @@ from typing import List
 
 from dagster import (
     In,
-    Nothing,
     Out,
     ResourceDefinition,
     RetryPolicy,
@@ -94,7 +93,7 @@ docker = {
 }
 
 
-@static_partitioned_config(partition_keys=[str(n) for n in range(1, 13)])  # Each month
+@static_partitioned_config(partition_keys=[str(n) for n in range(1, 11)])  # Each month
 def docker_config(partition_key: int) -> dict:
     return docker | {
         "ops": {
@@ -142,14 +141,14 @@ docker_week_3_schedule = ScheduleDefinition(
 
 
 @sensor(
-    job=local_week_3_pipeline,
+    job=docker_week_3_pipeline,
     minimum_interval_seconds=30
 )
 def docker_week_3_sensor(context):
     new_s3_keys = get_s3_keys(
         bucket="dagster",
         prefix="prefix",
-        endpoint_url=context.s3.endpoint_url,
+        endpoint_url="http://host.docker.internal:4566",
         since_key=context.last_run_key,
     )
     for new_s3_key in new_s3_keys:
@@ -159,11 +158,11 @@ def docker_week_3_sensor(context):
                 "ops": {
                     "get_s3_data": {
                         "config": {
-                            "s3_key": f"prefix/stock_{new_s3_key}.csv"
+                            "s3_key": new_s3_key
                         }
                     }
                 }
             }
         )
     else:
-        yield SkipReason("No new files")
+        yield SkipReason("No new s3 files found in bucket.")
