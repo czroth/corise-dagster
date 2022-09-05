@@ -94,7 +94,7 @@ docker = {
 }
 
 
-@static_partitioned_config(partition_keys=[str(n) for n in range(1, 11)])
+@static_partitioned_config(partition_keys=[str(n) for n in range(1, 13)])  # Each month
 def docker_config(partition_key: int) -> dict:
     return docker | {
         "ops": {
@@ -123,6 +123,10 @@ docker_week_3_pipeline = week_3_pipeline.to_job(
         "s3": s3_resource,
         "redis": redis_resource,
     },
+    op_retry_policy=RetryPolicy(
+        max_retries=10,
+        delay=1
+    ),
 )
 
 
