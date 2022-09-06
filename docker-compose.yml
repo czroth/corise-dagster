@@ -166,6 +166,8 @@ services:
       - week_3_4
     networks:
       - dagster_network
+    extra_hosts:
+      - host.docker.internal:host-gateway
 
 networks:
   dagster_network:
